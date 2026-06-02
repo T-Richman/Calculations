@@ -17,7 +17,11 @@ class SC2Page implements ActionListener{
 	private JLabel meanLabel = new JLabel();
 	private JLabel varianceLabel = new JLabel();
 	private JLabel standevLabel = new JLabel();
-	private JLabel binDistLabel = new JLabel();
+	private JLabel binExactLabel = new JLabel();
+	private JLabel binGeqLabel = new JLabel();
+	private JLabel binLeqLabel = new JLabel();
+	private JLabel binGtLabel = new JLabel();
+	private JLabel binLtLabel = new JLabel();
 	private JLabel bdMeanLabel = new JLabel();
 	private JLabel bdStandevLabel = new JLabel();
 	private JTextField randVar = new JTextField();
@@ -40,7 +44,7 @@ class SC2Page implements ActionListener{
 		option = 0;
 		
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		mainFrame.setSize(640, 320);
+		mainFrame.setSize(720, 360);
 		mainFrame.setVisible(true);
 		mainFrame.setLayout(null);
 		
@@ -82,7 +86,11 @@ class SC2Page implements ActionListener{
 		outPanel.add(meanLabel);
 		outPanel.add(varianceLabel);
 		outPanel.add(standevLabel);
-		outPanel.add(binDistLabel);
+		outPanel.add(binExactLabel);
+		outPanel.add(binGeqLabel);
+		outPanel.add(binLeqLabel);
+		outPanel.add(binGtLabel);
+		outPanel.add(binLtLabel);
 		outPanel.add(bdMeanLabel);
 		outPanel.add(bdStandevLabel);
 		
@@ -92,7 +100,11 @@ class SC2Page implements ActionListener{
 		varianceLabel.setVisible(false);
 		standevLabel.setVisible(false);
 		npkVal.setVisible(false);
-		binDistLabel.setVisible(false);
+		binExactLabel.setVisible(false);
+		binGeqLabel.setVisible(false);
+		binLeqLabel.setVisible(false);
+		binGtLabel.setVisible(false);
+		binLtLabel.setVisible(false);
 		bdMeanLabel.setVisible(false);
 		bdStandevLabel.setVisible(false);
 		
@@ -110,13 +122,21 @@ class SC2Page implements ActionListener{
 			standevLabel.setVisible(true);
 			option = 1;
 			npkVal.setVisible(false);
-			binDistLabel.setVisible(false);
+			binExactLabel.setVisible(false);
+			binGeqLabel.setVisible(false);
+			binLeqLabel.setVisible(false);
+			binGtLabel.setVisible(false);
+			binLtLabel.setVisible(false);
 			bdMeanLabel.setVisible(false);
 			bdStandevLabel.setVisible(false);
 		}
 		if(e.getSource()==binDistButton) {
 			npkVal.setVisible(true);
-			binDistLabel.setVisible(true);
+			binExactLabel.setVisible(true);
+			binGeqLabel.setVisible(true);
+			binLeqLabel.setVisible(true);
+			binGtLabel.setVisible(true);
+			binLtLabel.setVisible(true);
 			bdMeanLabel.setVisible(true);
 			bdStandevLabel.setVisible(true);
 			option = 2;
@@ -171,10 +191,39 @@ class SC2Page implements ActionListener{
 					if(npk.length==3) {
 						if(npk[2]<npk[0]) {
 							if(npk[1]<1 && npk[1]>0) {
-								double binDist = Stat_Calc_2.bin_dist_calc(npk[0], npk[1], npk[2]);
+								double binExact = Stat_Calc_2.bin_dist_exact_calc(npk[0], npk[1], npk[2]);
+								double binGeq=0;
+								double binLeq=0;
+								double binGt=0;
+								double binLt=0;
+								try {
+									binGeq = Stat_Calc_2.bin_dist_geq_calc(npk[0], npk[1], npk[2]);
+									
+								}
+								catch(StackOverflowError sof) {
+									System.out.println("Overflow fom geq");
+								}
+								try {
+									binLeq = Stat_Calc_2.bin_dist_leq_calc(npk[0], npk[1], npk[2]);
+								}
+								catch(StackOverflowError sof2) {
+									System.out.println("Overflow fom leq");
+								}
+								try {
+									binGt = Stat_Calc_2.bin_dist_gt_calc(npk[0], npk[1], npk[2]);
+								}
+								catch(StackOverflowError sof3) {
+									System.out.println("Overflow fom gt");
+								}
+								try {
+									binLt = Stat_Calc_2.bin_dist_lt_calc(npk[0], npk[1], npk[2]);
+								}
+								catch(StackOverflowError sof4) {
+									System.out.println("Overflow fom lt");
+								}
 								double bd_mean = (npk[0] * npk[1]);
 								double bd_standev = Math.sqrt(npk[0]*npk[1]*(1-npk[1]));
-								draw_bin_dist(binDist, bd_mean, bd_standev);
+								draw_bin_dist(binExact, binGeq, binLeq, binGt, binLt, bd_mean, bd_standev);
 							}
 							else
 							{
@@ -207,11 +256,20 @@ class SC2Page implements ActionListener{
 		standevLabel.setBounds(20, varianceLabel.getY()+dist_out, max_char, text_height);
 		
 	}
-	public void draw_bin_dist(double x, double y, double z) {
-		binDistLabel.setText("Exact Binomial Distribution: "+x);
-		binDistLabel.setBounds(20, 20, max_char, text_height);
+	
+	public void draw_bin_dist(double t, double u, double v, double w, double x, double y, double z) {
+		binExactLabel.setText("Exact(X=x) Binomial Distribution: "+t);
+		binExactLabel.setBounds(20, 20, max_char, text_height);
+		binGeqLabel.setText("Cumulative(X>=x) Distribution: "+u);
+		binGeqLabel.setBounds(20, binExactLabel.getY()+dist_out, max_char, text_height);
+		binLeqLabel.setText("Cumulative(X<=x) Distribution: "+v);
+		binLeqLabel.setBounds(20, binGeqLabel.getY()+dist_out, max_char, text_height);
+		binGtLabel.setText("Cumulative(X>x) Distribution: "+w);
+		binGtLabel.setBounds(20, binLeqLabel.getY()+dist_out, max_char, text_height);
+		binLtLabel.setText("Cumulative(X<x) Distribution: "+x);
+		binLtLabel.setBounds(20, binGtLabel.getY()+dist_out, max_char, text_height);
 		bdMeanLabel.setText("Mean Value: "+y);
-		bdMeanLabel.setBounds(20, binDistLabel.getY()+dist_out, max_char, text_height);
+		bdMeanLabel.setBounds(20, binLtLabel.getY()+dist_out, max_char, text_height);
 		bdStandevLabel.setText("Standard Deviation Value: "+z);
 		bdStandevLabel.setBounds(20, bdMeanLabel.getY()+dist_out, max_char, text_height);
 		
@@ -219,49 +277,80 @@ class SC2Page implements ActionListener{
 }
 
 public class Stat_Calc_2 {
-  public static double mean_value_calc(LinkedList<Double> x_Arr, LinkedList<Double> p_Arr, int n){
-    double bar_value = 0;
-    for (int i=0;i<x_Arr.size();i++) {
-      bar_value += x_Arr.get(i)*p_Arr.get(i);
-    }
-    return bar_value;
-  }
+	public static double mean_value_calc(LinkedList<Double> x_Arr, LinkedList<Double> p_Arr, int n){
+	    double bar_value = 0;
+	    for (int i=0;i<x_Arr.size();i++) {
+	      bar_value += x_Arr.get(i)*p_Arr.get(i);
+	    }
+	    return bar_value;
+	}
   
-  public static double  variance_calc(LinkedList<Double> x_Arr, LinkedList<Double> p_Arr, double mu){
-    double s2 = 0;
-    for (int i=0;i<x_Arr.size();i++) {
-      s2 += ((x_Arr.get(i)-mu)*(x_Arr.get(i)-mu))*p_Arr.get(i);
-    }
-    //sigma = sum/(n-1);
-    return s2;
-  }
+	public static double  variance_calc(LinkedList<Double> x_Arr, LinkedList<Double> p_Arr, double mu){
+		double s2 = 0;
+		for (int i=0;i<x_Arr.size();i++) {
+		s2 += ((x_Arr.get(i)-mu)*(x_Arr.get(i)-mu))*p_Arr.get(i);
+		}
+		//sigma = sum/(n-1);
+    	return s2;
+	}
 
-  public static double stan_dev_calc(double sigma){
-    return Math.sqrt(sigma);
-  }
+	public static double stan_dev_calc(double sigma){
+	    return Math.sqrt(sigma);
+	}
 
-  public static double bin_dist_calc(double n, double p, double k){
-    //recursion needed for cumulatives
-    //System.out.println()
-    return bin_coeff_calc(n, k)*Math.pow(p, k)*Math.pow(1-p,n-k);
-  }
+	public static double bin_dist_exact_calc(double n, double p, double k){
+		//recursion needed for cumulatives
+		//System.out.println()
+		return bin_coeff_calc(n, k)*Math.pow(p, k)*Math.pow(1-p,n-k);
+	}
   
-  public static double bin_coeff_calc(double n, double k){
-    return fact(n)/(fact(k)*fact(n-k));
-  }
+	public static double bin_dist_geq_calc(double n, double p, double k){
+		double result=0;
+		for(double i=k;i<n+1;i++){
+			result+=(bin_coeff_calc(n,i)*Math.pow(p, i)*Math.pow(1-p,(n-i)));
+		}
+		return result;
+	}
+  
+	public static double bin_dist_leq_calc(double n, double p, double k){
+		double result=0;
+		for(double i=k;i>-1;i--){
+			result+=(bin_coeff_calc(n,i)*Math.pow(p, i)*Math.pow(1-p,(n-i)));
+		}
+    return result;
+	}
+	
+	public static double bin_dist_gt_calc(double n, double p, double k){
+		double result=0;
+		for(double i=0;i<k+1;i++){
+			result+=(bin_coeff_calc(n,i)*Math.pow(p, i)*Math.pow(1-p,(n-i)));
+		}
+		return 1-result;
+	}
+  
+	public static double bin_dist_lt_calc(double n, double p, double k){
+		double result=0;
+		for(double i=k-1;i>-1;i--){
+			result+=(bin_coeff_calc(n,i)*Math.pow(p, i)*Math.pow(1-p,(n-i)));
+		}
+    return result;
+	}
+	
+	public static double bin_coeff_calc(double n, double k){
+		return fact(n)/(fact(k)*fact(n-k));
+	}
 
-  public static double fact(double  n){
-    if(n==1){
-      return 1;
-    }
-    else{
-      return n*fact(n-1);
-    }
-  }
+	public static double fact(double  n){
+		if(n<=1){
+			return 1;
+		}
+		else{
+			return n*fact(n-1);
+		}
+	}
   
-  public static void main(String[] args) {
-    SC2Page mp = new SC2Page();
-    mp.setup();
-  }
-  
+	public static void main(String[] args) {
+		SC2Page mp = new SC2Page();
+		mp.setup();
+	}
 }
