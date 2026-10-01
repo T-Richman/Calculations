@@ -11,9 +11,96 @@ class Node{
 	}
 }
 
+/*
+Adding a node as a child to the tree's current node being checked:
+
+if lvl is 0(+)
+	"add node to current"
+else (lvl is not 0)
+	if node is leaf
+		if node is single value
+			"skip adding the node"
+		else (node is equation)
+			for each child in current:
+			if node is same as child (subequation) of current
+				"add node to currents child"
+				break
+	else (node is not leaf)
+		if node is contained in current and node is equation
+			"add node to current"
+		else (node is not contained in current or node is single-value)
+			if current has children
+				for each child in current:
+				if node is contained in currents child
+					if currents child has/is duplicate of node
+					else (currents child does not have/is not duplicate of node)
+						"add node to currents child"
+				if node is not same to any child of current
+					"add node to current"
+			else (current has no children)
+				"add node to current"
+*/
+
+/*
+adding based on node being an equation or single-value
+"contained"=node data is a subequation of currents data
+
+equation:
+if node contained in current
+	if current has children
+		for each child of current:
+		if node contained in currents child
+			"add node to currents child"
+		else (node not contained in currents child)
+			"add node to current"
+	else (current does not have children)
+		"add node to current"
+else (node not contained in current, root="NULL")
+	if current has children
+		for each child of current:
+		if node contained in currents child
+			"add node to currents child"
+		else (node not contained in currents child)
+			"add node to current"
+	else (current has no children)
+		"skip adding node"
+
+single-value:
+if node contained in current
+	if current has children
+		for each child of current:
+		if node contained in currents child
+			if currents child is a copy of node
+				"set current as filled with node"
+				"add node to currents parent"
+			else (currents child is not a copy of node)
+				"add node to currents child"
+		else (node not contained in currents child)
+			"add node to current"
+	else (current does not have children)
+		"add node to current"
+else (node is not contained in current)
+*/
+
+/*
+* int d_cnt=check_count(n,c,lvl);
+	if(d_cnt<=1) {
+		System.out.println("No self-operation (ex 2*2), checking for existing child values");
+		for(Node cc:c.children) {
+			if(cc.data==n.data) {
+				System.out.println("The current's grandchild is same as the node, leaving this branch");
+				break;
+			}
+		}
+	}
+* 
+*/
+
 class Tree{
 	private Node root;
+	private int sv_flag;
 	public int lvl;
+	
 	
 	public Tree() {
 		root = new Node("NULL");
@@ -24,7 +111,7 @@ class Tree{
 		Node n=new Node(s);
 		Node current=node;
 		int data_type=check_operator(n);
-		
+		LinkedList<Node> search_queue = new LinkedList<>();
 		//if root is empty, then simply add to root
 		if(lvl==0) {
 			System.out.println("New child node, adding child "+n.data);
@@ -34,19 +121,12 @@ class Tree{
 		else {
 			//if the entry is a duplicate, check if this entry being added is a leaf
 			if(check_leaf(current,s)==true) {
+				//tries to convert data to double, works if single-value, catches if equation
 				System.out.println("This node has duplicate data on this level, checking tree...");
-				//if the entry is a leaf it is skipped
-				double val=0;
-				int single_val_flag=0;
-				try {
-					val=Double.valueOf(n.data).doubleValue();
-					single_val_flag=1;
-				}
-				catch(NumberFormatException e) {
-					System.out.println("Cannot convert from String to double...");
-				}
+				sv_flag=convert_data(n);
 				
-				if(single_val_flag==1) {
+				//if the entry is a leaf (converted to double successfully) it is skipped
+				if(sv_flag==1) {
 					System.out.println("This node being left as a leaf");
 					System.out.println(" ");
 				}
@@ -67,9 +147,10 @@ class Tree{
 				System.out.println("This node is not a duplicate on this level, continuing adding...");
 				System.out.println("Node Data:"+n.data+", Length:"+n.data.length());
 				System.out.println("Current/Parent Data:"+current.data+", Length:"+current.data.length());
+				//checks if node is child of current(1) or not a child of current(0)
 				int cnt=check_data(n,current);
-				//if the entry and child have same parts
-				//n.data.length()
+				//checks if node is a single-value(1) or an equation(2)
+				//if node is a child of current and is an equation
 				if(cnt==1 && data_type==2) {
 					System.out.println("Node data is contained in current's data, adding as a child node");
 					System.out.println(" ");
@@ -77,6 +158,7 @@ class Tree{
 					current.children.add(n);
 				}
 				else {
+					
 					if(data_type==1) {
 						System.out.println("Node has single-number data, checking with current's children");
 					}
@@ -87,11 +169,35 @@ class Tree{
 						for(Node c:current.children) {
 							System.out.println("Checking the current's child "+c.data);
 							cnt=check_data(n,c);
-							//if the entry and child have same parts
+							//if the entry and current's child have same parts
 							if(cnt==1) {
-								System.out.println("Node is contained in current's child, moving to the child node "+c.data);
-								add_Node(s,c);
-								break;
+								
+								//CHECK IF CHILD HAS EXISITNG SAME DATA
+								//2*11 --> 2,11 VS 10/2 --> 10,2
+								//ALSO CHECK FOR SAME VALUES
+								//2*2 --> 2,2
+								double n_val=0;
+								double c_val=0;
+								try {
+									n_val=Double.valueOf(n.data).doubleValue();
+									c_val=Double.valueOf(c.data).doubleValue();
+								}
+								catch(NumberFormatException e) {
+									System.out.println("Cannot convert data of child or node from String to double...");
+								}
+								System.out.println(n_val);
+								System.out.println(c_val);
+								
+								if(c_val>0 && n_val>0 && c_val==n_val){
+									System.out.println("Current has duplicate of node, already filled, moving to next branch");
+									break;
+								}
+								else {
+									System.out.println("Node is contained in child "+c.data+", moving to the child node");
+									//search_queue.add(c);
+									add_Node(s,c);
+									break;
+								}
 							}
 						}
 						if(cnt==0) {
@@ -192,29 +298,40 @@ class Tree{
 		return list;
 	}
 	
-	//FIX THIS, 100 is being read as 10 for each char scanned
-	
+	public int check_count(Node n, Node c, int lvl) {
+		int cnt=0;
+		String sym="";
+		switch(lvl) {
+		case 0:
+			sym="\\+";
+			break;
+		case 1:
+			sym="-";
+			break;
+		case 2:
+			sym="\\*";
+			break;
+		case 3:
+			sym="/";
+			break;
+		}
+		String[] x=c.data.split(sym);
+		for(int i=0;i<x.length;i++) {
+			if(x[i]==n.data) {
+				cnt++;
+			}
+		}
+		return cnt;
+	}
+	//Checks if current node contains node as a child
 	public int check_data(Node n, Node c) {
 		int cnt=0;
 		if(c.data.contains(n.data)==true) {
 			cnt=1;
 		}
-		/*
-		for(int i=0;i<n.data.length();i++) {
-			for(int j=0;j<c.data.length();j++) {
-				if(c.data.charAt(j)==n.data.charAt(i)) {
-					System.out.println(c.data.charAt(j)+","+n.data.charAt(i));
-					cnt++;
-					c.data.replace(c.data.charAt(j), '_');
-					j=c.data.length()-1;
-				}
-			}
-		}
-		System.out.println("Current checked: "+c.data);
-		*/
 		return cnt;
 	}
-	
+	//Checks if node is a leaf by checking node's children for same data
 	public boolean check_leaf(Node n,String s) {
 		boolean check=false;
 		for(Node c:n.children) {
@@ -225,7 +342,7 @@ class Tree{
 		}
 		return check;
 	}
-	
+	//Checks if node data is an equation by checking for operators in data
 	public int check_operator(Node n) {
 		//System.out.println(n.data);
 		int type=1;
@@ -240,6 +357,18 @@ class Tree{
 			}
 		}
 		return type;
+	}
+	//Converts node data to double if its single value
+	public int convert_data(Node n) {
+		int single_val_flag=0;
+		try {
+			double val=Double.valueOf(n.data).doubleValue();
+			single_val_flag=1;
+		}
+		catch(NumberFormatException e) {
+			System.out.println("Cannot convert from String to double...");
+		}
+		return single_val_flag;
 	}
 	
 	public Node get_root() {
@@ -308,6 +437,8 @@ public class PEDMAS_Calc {
 		}
 		tree1.lvl++;
 		System.out.println("===========================================================");
+		System.out.println("===========================================================");
+		System.out.println("===========================================================");
 		
 		System.out.println("Minus Layer:");
 		LinkedList<String[]> minus_layer=split_eqtn(plus_layer,"-");
@@ -318,6 +449,8 @@ public class PEDMAS_Calc {
 			}
 		}
 		tree1.lvl++;
+		System.out.println("===========================================================");
+		System.out.println("===========================================================");
 		System.out.println("===========================================================");
 		
 		System.out.println("Multiply Layer:");
@@ -330,10 +463,22 @@ public class PEDMAS_Calc {
 		}
 		tree1.lvl++;
 		System.out.println("===========================================================");
+		System.out.println("===========================================================");
+		System.out.println("===========================================================");
 		//tree1.print_children();
 		
 		System.out.println("Divide Layer:");
 		LinkedList<String[]> divide_layer=split_eqtn(multiply_layer,"/");
+		for(String[] l:divide_layer) {
+			for(int i=0;i<l.length;i++) {
+				System.out.println(l[i]);
+				tree1.add_Node(l[i], tree1.get_root());
+			}
+		}
+		tree1.lvl++;
+		System.out.println("===========================================================");
+		System.out.println("===========================================================");
+		System.out.println("===========================================================");
 		
 		System.out.println("Final Layer:");
 		LinkedList<String[]> final_layer=split_eqtn(divide_layer,"/");
