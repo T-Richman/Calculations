@@ -224,6 +224,8 @@ public class PEDMAS_Calc {
 		//Ex 1: 9+2*11-5*6-10/2-100+24/12*2/8 = -103.5
 		//Ex 2: 2+4+55*6*5/3/6*5-1-1-8 = 454.333
 		//Ex 3: 1+2-3*4/5+6-7*8/9 = 0.3777
+		//Ex 4: 2^3+4 = 12
+		//Ex 5: 5*2^3/4 = 10
 		Scanner s1 = new Scanner(System.in);
 		System.out.println("Enter your equation: ");
 		String eqtn = s1.nextLine();
@@ -231,7 +233,7 @@ public class PEDMAS_Calc {
 		
 		LinkedList<Double> sv_list = new LinkedList<>();
 		LinkedList<String> eqtn_list = new LinkedList<>();
-		String[] sym = {"+", "-", "*", "/", "^"};
+		String[] sym = {"\\+", "-", "\\*", "/", "\\^"};
 		String val="";
 		for(int i=0;i<eqtn.length();i++) {
 			boolean check_1=eqtn.charAt(i)=='+';
@@ -250,100 +252,54 @@ public class PEDMAS_Calc {
 		}
 		eqtn_list.add(val);
 		
-		LinkedList<String[]> main_layer=split_eqtn(eqtn,"\\+");
-		String[] plus_arr=convert_LinkedList(main_layer);
-		for(int i=0;i<plus_arr.length;i++) {
-			try {
-				sv_list.add(Double.valueOf(plus_arr[i]).doubleValue());
-			}
-			catch(NumberFormatException e) {
-				//System.out.println("Cannot add the following as a single-value: "+plus_arr[i]);
-			}
-		}
 		
-		main_layer=split_eqtn(main_layer,"-");
-		String[] minus_arr=convert_LinkedList(main_layer);
-		minus_arr=filter_eqtn(plus_arr,minus_arr);
-		main_layer.removeAll(main_layer);
-		main_layer.add(minus_arr);
-		for(int i=0;i<minus_arr.length;i++) {
-			try {
-				sv_list.add(Double.valueOf(minus_arr[i]).doubleValue());
+		LinkedList<String[]> main_layer = new LinkedList<>();
+		String[] prev_arr=null;
+		for(int x=0;x<sym.length;x++) {
+			String n=sym[x];
+			if(x>0) {
+				main_layer=split_eqtn(main_layer,n);
 			}
-			catch(NumberFormatException e) {
-				//System.out.println("Cannot add the following as a single-value: "+minus_arr[i]);
+			else {
+				main_layer=split_eqtn(eqtn,n);
 			}
-		}
-
-		main_layer=split_eqtn(main_layer,"\\*");
-		String[] multiply_arr=convert_LinkedList(main_layer);
-		multiply_arr=filter_eqtn(minus_arr,multiply_arr);
-		main_layer.removeAll(main_layer);
-		main_layer.add(multiply_arr);
-		for(int i=0;i<multiply_arr.length;i++) {
-			try {
-				sv_list.add(Double.valueOf(multiply_arr[i]).doubleValue());
+			String[] arr=convert_LinkedList(main_layer);
+			if(x>0) {
+				arr=filter_eqtn(prev_arr,arr);
+				main_layer.removeAll(main_layer);
+				main_layer.add(arr);
 			}
-			catch(NumberFormatException e) {
-				//System.out.println("Cannot add the following as a single-value: "+multiply_arr[i]);
+			for(int i=0;i<arr.length;i++) {
+				try {
+					sv_list.add(Double.valueOf(arr[i]).doubleValue());
+				}
+				catch(NumberFormatException e) {
+					//System.out.println("Cannot add the following as a single-value: "+minus_arr[i]);
+				}
 			}
-		}
-		
-		main_layer=split_eqtn(main_layer,"/");
-		String[] divide_arr=convert_LinkedList(main_layer);
-		divide_arr=filter_eqtn(multiply_arr,divide_arr);
-		main_layer.removeAll(main_layer);
-		main_layer.add(divide_arr);
-		for(int i=0;i<divide_arr.length;i++) {
-			try {
-				sv_list.add(Double.valueOf(divide_arr[i]).doubleValue());
+			if(x%2==0) {
+				sym[x]=String.valueOf(sym[x].charAt(sym[x].length()-1));
 			}
-			catch(NumberFormatException e) {
-				//System.out.println("Cannot add the following as a single-value: "+divide_arr[i]);
-			}
-		}
-		
-		main_layer=split_eqtn(main_layer,"\\^");
-		String[] exp_arr=convert_LinkedList(main_layer);
-		exp_arr=filter_eqtn(divide_arr,exp_arr);
-		main_layer.removeAll(main_layer);
-		main_layer.add(exp_arr);
-		for(int i=0;i<exp_arr.length;i++) {
-			try {
-				sv_list.add(Double.valueOf(exp_arr[i]).doubleValue());
-			}
-			catch(NumberFormatException e) {
-				//System.out.println("Cannot add the following as a single-value: "+divide_arr[i]);
-			}
+			prev_arr=arr;
 		}
 		
 		sv_list=sort_sv(eqtn_list, sv_list);
-		/*
-		for(String s:eqtn_list) {
-			System.out.print(s+" ");
-		}
-		System.out.println(" ");
-		for(double d:sv_list) {
-			System.out.print(d+" ");
-		}
-		System.out.println(" ");
-		*/
-		
 		sv_list=operate_sv(eqtn_list,sv_list,sym);
 		double result=0;
-		if(eqtn_list.contains("+")) {
+		
+		if(eqtn_list.contains(sym[0])) {
 			result=sv_list.getFirst()+sv_list.getLast();
 		}
-		else if(eqtn_list.contains("-")) {
+		else if(eqtn_list.contains(sym[1])) {
 			result=sv_list.getFirst()-sv_list.getLast();
 		}
-		else if(eqtn_list.contains("*")) {
+		else if(eqtn_list.contains(sym[2])) {
 			result=sv_list.getFirst()*sv_list.getLast();
 		}
-		else if(eqtn_list.contains("/")) {
+		else if(eqtn_list.contains(sym[3])) {
 			result=sv_list.getFirst()/sv_list.getLast();
 		}
-		else if(eqtn_list.contains("^")) {
+		else if(eqtn_list.contains(sym[4])) {
 			result=Math.pow(sv_list.getFirst(),sv_list.getLast());
 		}
 		else {
