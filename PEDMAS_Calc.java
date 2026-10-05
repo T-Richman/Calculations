@@ -168,11 +168,13 @@ public class PEDMAS_Calc {
 					for(int k=0;k<sv_list.size()-1;k++) {
 						if(sv_list.get(k)==num1 && sv_list.get(k+1)==num2) {
 							num1_ind=k;
+							break;
 						}
 					}
 					for(int k=1;k<sv_list.size();k++) {
 						if(sv_list.get(k)==num2 && sv_list.get(k-1)==num1) {
 							num2_ind=k;
+							break;
 						}
 					}
 					switch(sym[i]) {
@@ -198,6 +200,7 @@ public class PEDMAS_Calc {
 					sv_list.remove(num2_ind);
 					val_list=sv_list;
 					j=1;
+					System.out.println(val_list);
 				}
 			}
 		}
@@ -206,8 +209,9 @@ public class PEDMAS_Calc {
 	
 	public static void main(String[] args) {
 		//Gets string from user input
-		//Ex 1: 9+2*11-5*6-10/2-100+24/12*2/8
-		//Ex 2: 2+4+55*6*5/3/6*5-1-1-8
+		//Ex 1: 9+2*11-5*6-10/2-100+24/12*2/8 = -103.5
+		//Ex 2: 2+4+55*6*5/3/6*5-1-1-8 = 454.333
+		//Ex 3: 1+2-3*4/5+6-7*8/9 = 0.3777
 		Scanner s1 = new Scanner(System.in);
 		System.out.println("Enter your equation: ");
 		String eqtn = s1.nextLine();
