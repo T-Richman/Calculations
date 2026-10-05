@@ -99,7 +99,7 @@ public class PEDMAS_Calc {
 		for(double d:sv_old_list) {
 			sv_list.add(d);
 		}
-		val_list.removeIf(v->v.equals("+")||v.equals("-")||v.equals("*")||v.equals("/"));
+		val_list.removeIf(v->v.equals("+")||v.equals("-")||v.equals("*")||v.equals("/")||v.equals("^"));
 		for(int i=0;i<val_list.size();i++) {
 			double comp=Double.valueOf(val_list.get(i)).doubleValue();
 			double comp_next=0;
@@ -112,27 +112,36 @@ public class PEDMAS_Calc {
 			}
 			double temp=0;
 			//System.out.println(comp);
-			for(int j=0;j<sv_list.size();j++) {
+			for(int j=i;j<sv_list.size();j++) {
 				//System.out.println("Same Value: "+(sv_list.get(j)==comp));
-				if(sv_list.get(j)==comp && j==i) {
-					//System.out.println("Wrong Right: "+(i<val_list.size()-1 && sv_list.get(j+1)!=comp_next));
-					if(i<val_list.size()-1 && sv_list.get(j+1)!=comp_next) {
-						int temp_ind=sv_list.subList(j+1, sv_list.size()).indexOf(comp_next);
-						int ind_next=sv_list.size()-sv_list.subList(j+1, sv_list.size()).size()+temp_ind;
-						temp=sv_list.get(j+1);
-						sv_list.set(j+1, sv_list.get(ind_next));
-						sv_list.set(ind_next, temp);
-						break;
-					}
-					else {
-						//System.out.println("Wrong Left: "+(i>0 && sv_list.get(j-1)!=comp_prev));
-						if(i>0 && sv_list.get(j-1)!=comp_prev) {
-							int ind_prev=sv_list.subList(0, j).lastIndexOf(comp_prev)-1;
-							temp=sv_list.get(j-1);
-							sv_list.set(j-1, sv_list.get(ind_prev));
-							sv_list.set(ind_prev, temp);
+				if(sv_list.get(j)==comp) {
+					//System.out.println("Correct Position: "+(j==i));
+					if(j==i) {
+						//System.out.println("Wrong Right: "+(i<val_list.size()-1 && sv_list.get(j+1)!=comp_next));
+						if(i<val_list.size()-1 && sv_list.get(j+1)!=comp_next) {
+							int temp_ind=sv_list.subList(j+1, sv_list.size()).indexOf(comp_next);
+							int ind_next=sv_list.size()-sv_list.subList(j+1, sv_list.size()).size()+temp_ind;
+							temp=sv_list.get(j+1);
+							sv_list.set(j+1, sv_list.get(ind_next));
+							sv_list.set(ind_next, temp);
 							break;
 						}
+						else {
+							//System.out.println("Wrong Left: "+(i>0 && sv_list.get(j-1)!=comp_prev));
+							if(i>0 && sv_list.get(j-1)!=comp_prev) {
+								int ind_prev=sv_list.subList(0, j).lastIndexOf(comp_prev)-1;
+								temp=sv_list.get(j-1);
+								sv_list.set(j-1, sv_list.get(ind_prev));
+								sv_list.set(ind_prev, temp);
+								break;
+							}
+						}
+					}
+					else {
+						temp=sv_list.get(i);
+						sv_list.set(i, sv_list.get(j));
+						sv_list.set(j, temp);
+						break;
 					}
 				}
 			}
@@ -140,7 +149,7 @@ public class PEDMAS_Calc {
 		return sv_list;
 	}
 	//Repeatedly performs operation is PEDMAS order, leaving last pair for final operation
-	// 10/4/2 Performs order div-mul-sub-add, exp and par will be added someday
+	// 10/4/2 Performs order exp-div-mul-sub-add, par will be added someday
 	public static LinkedList<Double> operate_sv(LinkedList<String> eqtn_list, LinkedList<Double> val_list, String[] sym){
 		LinkedList<Double> sv_list = new LinkedList<>();
 		LinkedList<String> noneq_list = new LinkedList<>();
@@ -151,7 +160,7 @@ public class PEDMAS_Calc {
 		for(String s:eqtn_list) {
 			noneq_list.add(s);
 		}
-		val_list.removeIf(v->v.equals("+")||v.equals("-")||v.equals("*")||v.equals("/"));
+		val_list.removeIf(v->v.equals("+")||v.equals("-")||v.equals("*")||v.equals("/")||v.equals("^"));
 		
 		double num1=0;
 		double num2=0;
@@ -190,6 +199,9 @@ public class PEDMAS_Calc {
 					case "/":
 						result=sv_list.get(num1_ind)/sv_list.get(num2_ind);
 						break;
+					case "^":
+						result=Math.pow(sv_list.get(num1_ind),sv_list.get(num2_ind));
+						break;
 					}
 					System.out.println("Number 1: "+num1+", Number 2: "+num2);
 					System.out.println("Result: "+result);
@@ -219,14 +231,15 @@ public class PEDMAS_Calc {
 		
 		LinkedList<Double> sv_list = new LinkedList<>();
 		LinkedList<String> eqtn_list = new LinkedList<>();
-		String[] sym = {"+", "-", "*", "/"};
+		String[] sym = {"+", "-", "*", "/", "^"};
 		String val="";
 		for(int i=0;i<eqtn.length();i++) {
 			boolean check_1=eqtn.charAt(i)=='+';
 			boolean check_2=eqtn.charAt(i)=='-';
 			boolean check_3=eqtn.charAt(i)=='*';
 			boolean check_4=eqtn.charAt(i)=='/';
-			if((check_1==false) && (check_2==false) && (check_3==false) && (check_4==false)) {
+			boolean check_5=eqtn.charAt(i)=='^';
+			if((check_1==false) && (check_2==false) && (check_3==false) && (check_4==false) && (check_5==false)) {
 				val+=eqtn.charAt(i);
 			}
 			else {
@@ -264,7 +277,6 @@ public class PEDMAS_Calc {
 
 		main_layer=split_eqtn(main_layer,"\\*");
 		String[] multiply_arr=convert_LinkedList(main_layer);
-		LinkedList<Node> nodelist_2 = new LinkedList<>();
 		multiply_arr=filter_eqtn(minus_arr,multiply_arr);
 		main_layer.removeAll(main_layer);
 		main_layer.add(multiply_arr);
@@ -279,13 +291,26 @@ public class PEDMAS_Calc {
 		
 		main_layer=split_eqtn(main_layer,"/");
 		String[] divide_arr=convert_LinkedList(main_layer);
-		LinkedList<Node> nodelist_3 = new LinkedList<>();
 		divide_arr=filter_eqtn(multiply_arr,divide_arr);
 		main_layer.removeAll(main_layer);
 		main_layer.add(divide_arr);
 		for(int i=0;i<divide_arr.length;i++) {
 			try {
 				sv_list.add(Double.valueOf(divide_arr[i]).doubleValue());
+			}
+			catch(NumberFormatException e) {
+				//System.out.println("Cannot add the following as a single-value: "+divide_arr[i]);
+			}
+		}
+		
+		main_layer=split_eqtn(main_layer,"\\^");
+		String[] exp_arr=convert_LinkedList(main_layer);
+		exp_arr=filter_eqtn(divide_arr,exp_arr);
+		main_layer.removeAll(main_layer);
+		main_layer.add(exp_arr);
+		for(int i=0;i<exp_arr.length;i++) {
+			try {
+				sv_list.add(Double.valueOf(exp_arr[i]).doubleValue());
 			}
 			catch(NumberFormatException e) {
 				//System.out.println("Cannot add the following as a single-value: "+divide_arr[i]);
@@ -317,6 +342,12 @@ public class PEDMAS_Calc {
 		}
 		else if(eqtn_list.contains("/")) {
 			result=sv_list.getFirst()/sv_list.getLast();
+		}
+		else if(eqtn_list.contains("^")) {
+			result=Math.pow(sv_list.getFirst(),sv_list.getLast());
+		}
+		else {
+			result=sv_list.getFirst();
 		}
 		System.out.println("Answer:"+result);
 	}
