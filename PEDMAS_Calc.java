@@ -71,7 +71,7 @@ public class PEDMAS_Calc {
 			sv_flag=convert_String_Double(next_arr[i]);
 			if(next_arr[i]!="NULL") {
 				result[result_ind]=next_arr[i];
-				System.out.println(result[result_ind]);
+				//System.out.println(result[result_ind]);
 				result_ind++;
 			}
 		}
@@ -90,26 +90,49 @@ public class PEDMAS_Calc {
 		return sv_flag;
 	}
 	//Sorts the single-values LinkedList to properly match the equation
-	public static LinkedList<Double> sort_sv(LinkedList<String> eqtn_list, LinkedList<Double> sv_list) {
+	public static LinkedList<Double> sort_sv(LinkedList<String> eqtn_list, LinkedList<Double> sv_old_list) {
 		LinkedList<String> val_list = new LinkedList<>();
+		LinkedList<Double> sv_list = new LinkedList<>();
 		for(String s:eqtn_list) {
 			val_list.add(s);
 		}
+		for(double d:sv_old_list) {
+			sv_list.add(d);
+		}
 		val_list.removeIf(v->v.equals("+")||v.equals("-")||v.equals("*")||v.equals("/"));
-		for(String s:val_list) {
-			double comp=Double.valueOf(s).doubleValue();
+		for(int i=0;i<val_list.size();i++) {
+			double comp=Double.valueOf(val_list.get(i)).doubleValue();
+			double comp_next=0;
+			double comp_prev=0;
+			if(i<val_list.size()-1) {
+				comp_next=Double.valueOf(val_list.get(i+1)).doubleValue();
+			}
+			if(i>0){
+				comp_prev=Double.valueOf(val_list.get(i-1)).doubleValue();
+			}
 			double temp=0;
-			for(double d:sv_list) {
-				if(comp==d) {
-					if(sv_list.indexOf(d)<val_list.indexOf(s)) {
-						temp=sv_list.get(sv_list.indexOf(d)+1);
-						sv_list.set(sv_list.indexOf(d)+1, d);
-						sv_list.set(sv_list.indexOf(d), temp);
+			//System.out.println(comp);
+			for(int j=0;j<sv_list.size();j++) {
+				//System.out.println("Same Value: "+(sv_list.get(j)==comp));
+				if(sv_list.get(j)==comp && j==i) {
+					//System.out.println("Wrong Right: "+(i<val_list.size()-1 && sv_list.get(j+1)!=comp_next));
+					if(i<val_list.size()-1 && sv_list.get(j+1)!=comp_next) {
+						int temp_ind=sv_list.subList(j+1, sv_list.size()).indexOf(comp_next);
+						int ind_next=sv_list.size()-sv_list.subList(j+1, sv_list.size()).size()+temp_ind;
+						temp=sv_list.get(j+1);
+						sv_list.set(j+1, sv_list.get(ind_next));
+						sv_list.set(ind_next, temp);
+						break;
 					}
-					else if(sv_list.indexOf(d)>val_list.indexOf(s)) {
-						temp=sv_list.get(sv_list.indexOf(d)-1);
-						sv_list.set(sv_list.indexOf(d)-1, d);
-						sv_list.set(sv_list.indexOf(d), temp);
+					else {
+						//System.out.println("Wrong Left: "+(i>0 && sv_list.get(j-1)!=comp_prev));
+						if(i>0 && sv_list.get(j-1)!=comp_prev) {
+							int ind_prev=sv_list.subList(0, j).lastIndexOf(comp_prev)-1;
+							temp=sv_list.get(j-1);
+							sv_list.set(j-1, sv_list.get(ind_prev));
+							sv_list.set(ind_prev, temp);
+							break;
+						}
 					}
 				}
 			}
@@ -130,21 +153,18 @@ public class PEDMAS_Calc {
 		}
 		val_list.removeIf(v->v.equals("+")||v.equals("-")||v.equals("*")||v.equals("/"));
 		
-		int num1_ind=0;
-		int num2_ind=0;
 		double num1=0;
 		double num2=0;
 		double result=0;
 		//for each operation, checks which string-value is an operator
 		for(int i=(sym.length-1);i>-1;i--) {
-			System.out.println("Symbol:"+sym[i]);
-			for(int j=0;j<eqtn_list.size();j++) {
-				//System.out.println("Eqtn Sym:"+eqtn_list.get(j)+" Sym Sym:"+sym[i]);
-				//System.out.println(eqtn_list.get(j).length()==1 && eqtn_list.get(j).charAt(0)==sym[i].charAt(0));
+			System.out.println("Operation: "+sym[i]);
+			int num1_ind=0;
+			int num2_ind=0;
+			for(int j=1;j<eqtn_list.size()-1;j++) {
 				if(eqtn_list.get(j).length()==1 && eqtn_list.get(j).charAt(0)==sym[i].charAt(0)) {
 					num1=Double.valueOf(eqtn_list.get(j-1)).doubleValue();
 					num2=Double.valueOf(eqtn_list.get(j+1)).doubleValue();
-					System.out.println("Number 1: "+num1+", Number 2: "+num2);
 					for(int k=0;k<sv_list.size()-1;k++) {
 						if(sv_list.get(k)==num1 && sv_list.get(k+1)==num2) {
 							num1_ind=k;
@@ -169,22 +189,14 @@ public class PEDMAS_Calc {
 						result=sv_list.get(num1_ind)/sv_list.get(num2_ind);
 						break;
 					}
+					System.out.println("Number 1: "+num1+", Number 2: "+num2);
 					System.out.println("Result: "+result);
 					eqtn_list.set(j, String.valueOf(result));
 					eqtn_list.remove(j+1);
 					eqtn_list.remove(j-1);
-					for(String s:eqtn_list) {
-						System.out.print(s+" ");
-					}
-					System.out.println(" ");
 					sv_list.set(num1_ind, result);
 					sv_list.remove(num2_ind);
 					val_list=sv_list;
-					for(double d:val_list) {
-						System.out.print(d+" ");
-					}
-					System.out.println(" ");
-					System.out.println("-------------------------");
 					j=1;
 				}
 			}
@@ -193,9 +205,14 @@ public class PEDMAS_Calc {
 	}
 	
 	public static void main(String[] args) {
-		//Gets string and finds any parentheses pairs
-		String eqtn = "9+2*11-5*6-10/2-100+24/12*2/8";
-		System.out.println(eqtn);
+		//Gets string from user input
+		//Ex 1: 9+2*11-5*6-10/2-100+24/12*2/8
+		//Ex 2: 2+4+55*6*5/3/6*5-1-1-8
+		Scanner s1 = new Scanner(System.in);
+		System.out.println("Enter your equation: ");
+		String eqtn = s1.nextLine();
+		s1.close();
+		
 		LinkedList<Double> sv_list = new LinkedList<>();
 		LinkedList<String> eqtn_list = new LinkedList<>();
 		String[] sym = {"+", "-", "*", "/"};
@@ -216,7 +233,6 @@ public class PEDMAS_Calc {
 		}
 		eqtn_list.add(val);
 		
-		System.out.println("Plus Layer Parts:");
 		LinkedList<String[]> main_layer=split_eqtn(eqtn,"\\+");
 		String[] plus_arr=convert_LinkedList(main_layer);
 		for(int i=0;i<plus_arr.length;i++) {
@@ -224,12 +240,10 @@ public class PEDMAS_Calc {
 				sv_list.add(Double.valueOf(plus_arr[i]).doubleValue());
 			}
 			catch(NumberFormatException e) {
-				System.out.println("Cannot add the following as a single-value: "+plus_arr[i]);
+				//System.out.println("Cannot add the following as a single-value: "+plus_arr[i]);
 			}
 		}
-		System.out.println("===========================================================");
 		
-		System.out.println("Minus Layer Parts:");
 		main_layer=split_eqtn(main_layer,"-");
 		String[] minus_arr=convert_LinkedList(main_layer);
 		minus_arr=filter_eqtn(plus_arr,minus_arr);
@@ -240,12 +254,10 @@ public class PEDMAS_Calc {
 				sv_list.add(Double.valueOf(minus_arr[i]).doubleValue());
 			}
 			catch(NumberFormatException e) {
-				System.out.println("Cannot add the following as a single-value: "+minus_arr[i]);
+				//System.out.println("Cannot add the following as a single-value: "+minus_arr[i]);
 			}
 		}
-		System.out.println("===========================================================");
-		
-		System.out.println("Multiply Layer Parts:");
+
 		main_layer=split_eqtn(main_layer,"\\*");
 		String[] multiply_arr=convert_LinkedList(main_layer);
 		LinkedList<Node> nodelist_2 = new LinkedList<>();
@@ -257,12 +269,10 @@ public class PEDMAS_Calc {
 				sv_list.add(Double.valueOf(multiply_arr[i]).doubleValue());
 			}
 			catch(NumberFormatException e) {
-				System.out.println("Cannot add the following as a single-value: "+multiply_arr[i]);
+				//System.out.println("Cannot add the following as a single-value: "+multiply_arr[i]);
 			}
 		}
-		System.out.println("===========================================================");
 		
-		System.out.println("Divide Layer Parts:");
 		main_layer=split_eqtn(main_layer,"/");
 		String[] divide_arr=convert_LinkedList(main_layer);
 		LinkedList<Node> nodelist_3 = new LinkedList<>();
@@ -274,13 +284,12 @@ public class PEDMAS_Calc {
 				sv_list.add(Double.valueOf(divide_arr[i]).doubleValue());
 			}
 			catch(NumberFormatException e) {
-				System.out.println("Cannot add the following as a single-value: "+divide_arr[i]);
+				//System.out.println("Cannot add the following as a single-value: "+divide_arr[i]);
 			}
 		}
-		System.out.println("===========================================================");
 		
 		sv_list=sort_sv(eqtn_list, sv_list);
-		
+		/*
 		for(String s:eqtn_list) {
 			System.out.print(s+" ");
 		}
@@ -289,7 +298,7 @@ public class PEDMAS_Calc {
 			System.out.print(d+" ");
 		}
 		System.out.println(" ");
-		System.out.println("===========================================================");
+		*/
 		
 		sv_list=operate_sv(eqtn_list,sv_list,sym);
 		double result=0;
